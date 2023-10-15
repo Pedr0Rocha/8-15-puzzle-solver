@@ -1,6 +1,14 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
+
+type Puzzle struct {
+	InitialBoard    Board
+	Solution        Board
+	StepsToSolution int
+}
 
 type Board [][]int
 
@@ -91,16 +99,81 @@ func (b Board) getMutations() []Board {
 	return mutations
 }
 
-func main() {
-	board := Board{
-		{0, 2, 8},
-		{5, 6, 1},
-		{3, 7, 4},
-	}
-	board.Print()
-	mutations := board.getMutations()
+var puzzleEasy = Puzzle{
+	InitialBoard: Board{
+		{1, 2, 3},
+		{4, 5, 6},
+		{7, 0, 8},
+	},
+	Solution: Board{
+		{1, 2, 3},
+		{4, 5, 6},
+		{7, 8, 0},
+	},
+	StepsToSolution: 1,
+}
 
-	for _, mutation := range mutations {
-		mutation.Print()
+func IsSolution(test Board, solution Board) bool {
+	for row := range solution {
+		for col := range solution[row] {
+			if solution[row][col] != test[row][col] {
+				return false
+			}
+		}
 	}
+	return true
+}
+
+func (b Board) GenerateHash() string {
+	var hash string
+	for row := range b {
+		for col := range b[row] {
+			hash += fmt.Sprintf("%d ", b[row][col])
+		}
+	}
+	return hash
+}
+
+func (p Puzzle) Solve() bool {
+	fmt.Println("Trying to solve puzzle:")
+	p.InitialBoard.Print()
+
+	maxTries := 181_440
+
+	var queue []Board
+	visited := make(map[string]bool)
+	queue = append(queue, p.InitialBoard)
+	for {
+		if len(queue) == 0 {
+			break
+		}
+		curBoard := queue[len(queue)-1]
+		queue = queue[:len(queue)-1]
+		boardHash := curBoard.GenerateHash()
+
+		_, found := visited[boardHash]
+		if found {
+			continue
+		}
+
+		visited[boardHash] = true
+
+		if IsSolution(curBoard, p.Solution) {
+			fmt.Printf("It took %v tries\n", 181_440-maxTries)
+			return true
+		}
+
+		queue = append(queue, curBoard.getMutations()...)
+		maxTries = maxTries - 1
+
+		if maxTries <= 0 {
+			break
+		}
+	}
+	fmt.Println("Didn't solve it")
+	return false
+}
+
+func main() {
+	puzzleEasy.Solve()
 }
