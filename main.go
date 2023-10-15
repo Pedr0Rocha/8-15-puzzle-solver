@@ -5,9 +5,8 @@ import (
 )
 
 type Puzzle struct {
-	InitialBoard    Board
-	Solution        Board
-	StepsToSolution int
+	InitialBoard Board
+	MinSteps     int
 }
 
 type Board [][]int
@@ -16,6 +15,17 @@ type Position struct {
 	row int
 	col int
 }
+
+const (
+	MAX_STEPS_3X3 = 181_440
+)
+
+var Solution = Board{
+	{1, 2, 3},
+	{4, 5, 6},
+	{7, 8, 0},
+}
+var SolutionHash = Solution.GenerateHash()
 
 func NewBoard(size int) Board {
 	board := make([][]int, size)
@@ -105,23 +115,29 @@ var puzzleEasy = Puzzle{
 		{4, 5, 6},
 		{7, 0, 8},
 	},
-	Solution: Board{
-		{1, 2, 3},
-		{4, 5, 6},
-		{7, 8, 0},
-	},
-	StepsToSolution: 1,
+	MinSteps: 1,
 }
 
-func IsSolution(test Board, solution Board) bool {
-	for row := range solution {
-		for col := range solution[row] {
-			if solution[row][col] != test[row][col] {
-				return false
-			}
-		}
-	}
-	return true
+var puzzleMedium = Puzzle{
+	InitialBoard: Board{
+		{1, 2, 3},
+		{5, 6, 0},
+		{4, 7, 8},
+	},
+	MinSteps: 3,
+}
+
+var puzzleHard = Puzzle{
+	InitialBoard: Board{
+		{4, 1, 3},
+		{7, 2, 5},
+		{8, 0, 6},
+	},
+	MinSteps: 26,
+}
+
+func IsSolution(hash string) bool {
+	return hash == SolutionHash
 }
 
 func (b Board) GenerateHash() string {
@@ -134,11 +150,11 @@ func (b Board) GenerateHash() string {
 	return hash
 }
 
-func (p Puzzle) Solve() bool {
+func (p Puzzle) Solve() int {
 	fmt.Println("Trying to solve puzzle:")
 	p.InitialBoard.Print()
 
-	maxTries := 181_440
+	tries := 0
 
 	var queue []Board
 	visited := make(map[string]bool)
@@ -158,22 +174,22 @@ func (p Puzzle) Solve() bool {
 
 		visited[boardHash] = true
 
-		if IsSolution(curBoard, p.Solution) {
-			fmt.Printf("It took %v tries\n", 181_440-maxTries)
-			return true
+		if IsSolution(boardHash) {
+			fmt.Printf("It took %v tries\n", tries)
+			return tries
 		}
 
 		queue = append(queue, curBoard.getMutations()...)
-		maxTries = maxTries - 1
+		tries += 1
 
-		if maxTries <= 0 {
+		if tries >= MAX_STEPS_3X3 {
 			break
 		}
 	}
 	fmt.Println("Didn't solve it")
-	return false
+	return -1
 }
 
 func main() {
-	puzzleEasy.Solve()
+	puzzleHard.Solve()
 }
