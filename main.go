@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 )
 
 type Puzzle struct {
@@ -109,7 +110,7 @@ func (b Board) getMutations() []Board {
 	return mutations
 }
 
-var puzzleEasy = Puzzle{
+var puzzle1 = Puzzle{
 	InitialBoard: Board{
 		{1, 2, 3},
 		{4, 5, 6},
@@ -118,22 +119,40 @@ var puzzleEasy = Puzzle{
 	MinSteps: 1,
 }
 
-var puzzleMedium = Puzzle{
+var puzzle5 = Puzzle{
 	InitialBoard: Board{
 		{1, 2, 3},
 		{5, 6, 0},
 		{4, 7, 8},
 	},
-	MinSteps: 3,
+	MinSteps: 5,
 }
 
-var puzzleHard = Puzzle{
+var puzzle7 = Puzzle{
 	InitialBoard: Board{
 		{4, 1, 3},
 		{7, 2, 5},
 		{8, 0, 6},
 	},
-	MinSteps: 26,
+	MinSteps: 7,
+}
+
+var puzzle13 = Puzzle{
+	InitialBoard: Board{
+		{4, 3, 1},
+		{0, 7, 2},
+		{8, 5, 6},
+	},
+	MinSteps: 13,
+}
+
+var puzzle20 = Puzzle{
+	InitialBoard: Board{
+		{7, 4, 3},
+		{2, 8, 6},
+		{0, 5, 1},
+	},
+	MinSteps: 20,
 }
 
 func IsSolution(hash string) bool {
@@ -148,6 +167,136 @@ func (b Board) GenerateHash() string {
 		}
 	}
 	return hash
+}
+
+func abs(v int) int {
+	if v < 0 {
+		return -v
+	}
+	return v
+}
+
+func heuristic(b Board) int {
+	distance := 0
+	for row := range b {
+		for col := range b[row] {
+			if b[row][col] != 0 {
+				// Calculate the target position for the current number
+				targetRow := (b[row][col] - 1) / 3
+				targetCol := (b[row][col] - 1) % 3
+
+				// Calculate Manhattan distance
+				distance += abs(row-targetRow) + abs(col-targetCol)
+			}
+		}
+	}
+	return distance
+}
+
+func getLowestFScoreHash(openSet map[string]Board, fScore map[string]int) string {
+	lowest := math.MaxInt
+	lowestHash := ""
+	for k, v := range fScore {
+		if v < lowest {
+			if _, found := openSet[k]; !found {
+				continue
+			}
+			lowest = v
+			lowestHash = k
+		}
+	}
+	return lowestHash
+}
+
+func IsInArray(arr []string, target string) bool {
+	for _, element := range arr {
+		if element == target {
+			return true
+		}
+	}
+	return false
+}
+
+func reconstructPath(path map[string]Board, current Board) []Board {
+	completePath := []Board{current}
+
+	keys := make([]string, 0, len(path))
+	for k := range path {
+		keys = append(keys, k)
+	}
+
+	for {
+		hash := current.GenerateHash()
+		if !IsInArray(keys, hash) {
+			break
+		}
+
+		current = path[hash]
+		completePath = append(completePath, current)
+	}
+
+	for i, j := 0, len(completePath)-1; i < j; i, j = i+1, j-1 {
+		completePath[i], completePath[j] = completePath[j], completePath[i]
+	}
+
+	return completePath
+}
+
+func (p Puzzle) SolveAStar() int {
+	openSet := make(map[string]Board)
+	hash := p.InitialBoard.GenerateHash()
+	openSet[hash] = p.InitialBoard
+
+	gScore := make(map[string]int) // cost from start board to current board
+	fScore := make(map[string]int) // cost from start to goal
+	gScore[hash] = 0
+	fScore[hash] = heuristic(p.InitialBoard)
+
+	path := make(map[string]Board)
+
+	for {
+		if len(openSet) == 0 {
+			break
+		}
+
+		lowestFScoreHash := getLowestFScoreHash(openSet, fScore)
+		current := openSet[lowestFScoreHash]
+		currentHash := current.GenerateHash()
+
+		if IsSolution(currentHash) {
+			completePath := reconstructPath(path, current)
+
+			for _, p := range completePath {
+				p.Print()
+			}
+
+			fmt.Printf("Found solution in %v movements, optimal is %v\n", gScore[currentHash], p.MinSteps)
+			return fScore[currentHash]
+		}
+
+		delete(openSet, currentHash)
+
+		for _, neighbor := range current.getMutations() {
+			neighborHash := neighbor.GenerateHash()
+			tentativeGScore := gScore[currentHash] + 1 // + 1 because its the distance between current and neighbor
+
+			if _, found := gScore[neighborHash]; !found {
+				gScore[neighborHash] = math.MaxInt
+			}
+
+			if tentativeGScore < gScore[neighborHash] {
+				path[neighborHash] = current
+				gScore[neighborHash] = tentativeGScore
+				fScore[neighborHash] = gScore[neighborHash] + heuristic(neighbor)
+
+				if _, found := openSet[neighborHash]; !found {
+					openSet[neighborHash] = neighbor
+				}
+			}
+		}
+	}
+	fmt.Println("Failed to find the solution")
+	return -1
 }
 
 func (p Puzzle) Solve() int {
@@ -183,6 +332,7 @@ func (p Puzzle) Solve() int {
 		tries += 1
 
 		if tries >= MAX_STEPS_3X3 {
+			fmt.Println("Exausted attempts to solve puzzle")
 			break
 		}
 	}
@@ -191,5 +341,7 @@ func (p Puzzle) Solve() int {
 }
 
 func main() {
-	puzzleHard.Solve()
+	// puzzleEasy.SolveAStar()
+	puzzle20.SolveAStar()
+	// puzzleHard.SolveAStar()
 }
