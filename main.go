@@ -155,6 +155,24 @@ var puzzle20 = Puzzle{
 	MinSteps: 20,
 }
 
+var puzzle26 = Puzzle{
+	InitialBoard: Board{
+		{4, 8, 7},
+		{5, 3, 1},
+		{0, 6, 2},
+	},
+	MinSteps: 26,
+}
+
+var puzzle31 = Puzzle{
+	InitialBoard: Board{
+		{6, 4, 7},
+		{8, 5, 0},
+		{3, 2, 1},
+	},
+	MinSteps: 31,
+}
+
 func IsSolution(hash string) bool {
 	return hash == SolutionHash
 }
@@ -176,16 +194,14 @@ func abs(v int) int {
 	return v
 }
 
+// Manhattan distance
 func heuristic(b Board) int {
 	distance := 0
 	for row := range b {
 		for col := range b[row] {
 			if b[row][col] != 0 {
-				// Calculate the target position for the current number
 				targetRow := (b[row][col] - 1) / 3
 				targetCol := (b[row][col] - 1) % 3
-
-				// Calculate Manhattan distance
 				distance += abs(row-targetRow) + abs(col-targetCol)
 			}
 		}
@@ -261,7 +277,7 @@ func (p Puzzle) SolveAStar() int {
 
 		lowestFScoreHash := getLowestFScoreHash(openSet, fScore)
 		current := openSet[lowestFScoreHash]
-		currentHash := current.GenerateHash()
+		currentHash := lowestFScoreHash
 
 		if IsSolution(currentHash) {
 			completePath := reconstructPath(path, current)
@@ -342,6 +358,6 @@ func (p Puzzle) Solve() int {
 
 func main() {
 	// puzzleEasy.SolveAStar()
-	puzzle20.SolveAStar()
+	puzzle31.SolveAStar()
 	// puzzleHard.SolveAStar()
 }
