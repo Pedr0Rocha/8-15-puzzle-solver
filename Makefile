@@ -1,7 +1,7 @@
 all: test build
 
 build:
-	go build -o ./bin/puzzle main.go
+	go build -o ./bin/puzzle .
 
 test:
 	go test -v ./...
