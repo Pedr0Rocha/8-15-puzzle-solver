@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"math"
+	"os"
+	"runtime/pprof"
 )
 
 type Puzzle struct {
@@ -251,6 +253,7 @@ func reconstructPath(path map[string]Board, current Board) []Board {
 		completePath = append(completePath, current)
 	}
 
+	// reverse the path to display in correct order
 	for i, j := 0, len(completePath)-1; i < j; i, j = i+1, j-1 {
 		completePath[i], completePath[j] = completePath[j], completePath[i]
 	}
@@ -270,11 +273,7 @@ func (p Puzzle) SolveAStar() int {
 
 	path := make(map[string]Board)
 
-	for {
-		if len(openSet) == 0 {
-			break
-		}
-
+	for len(openSet) != 0 {
 		lowestFScoreHash := getLowestFScoreHash(openSet, fScore)
 		current := openSet[lowestFScoreHash]
 		currentHash := lowestFScoreHash
@@ -324,10 +323,7 @@ func (p Puzzle) Solve() int {
 	var queue []Board
 	visited := make(map[string]bool)
 	queue = append(queue, p.InitialBoard)
-	for {
-		if len(queue) == 0 {
-			break
-		}
+	for len(queue) != 0 {
 		curBoard := queue[len(queue)-1]
 		queue = queue[:len(queue)-1]
 		boardHash := curBoard.GenerateHash()
@@ -356,8 +352,21 @@ func (p Puzzle) Solve() int {
 	return -1
 }
 
+func run(puzzle Puzzle, withProfiler bool) int {
+	if withProfiler {
+		f, err := os.Create("solver.prof")
+		if err != nil {
+			fmt.Println(err)
+			return -1
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+
+	minSteps := puzzle.SolveAStar()
+	return minSteps
+}
+
 func main() {
-	// puzzleEasy.SolveAStar()
-	puzzle31.SolveAStar()
-	// puzzleHard.SolveAStar()
+	run(puzzle31, false)
 }

@@ -21,3 +21,6 @@
 go.work
 
 /bin
+
+# performance profiling files
+*.prof
