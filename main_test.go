@@ -1,16 +1,21 @@
 package main
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/Pedr0Rocha/8-15-puzzle-solver/board"
+	"github.com/Pedr0Rocha/8-15-puzzle-solver/puzzle"
+)
 
 func TestRun(t *testing.T) {
 	inputs := []struct {
 		name   string
-		puzzle Puzzle
+		puzzle puzzle.Puzzle
 	}{
 		{
 			name: "3x3 - 13 steps",
-			puzzle: Puzzle{
-				InitialBoard: Board{
+			puzzle: puzzle.Puzzle{
+				InitialBoard: board.Board{
 					{4, 3, 1},
 					{0, 7, 2},
 					{8, 5, 6},
@@ -20,8 +25,8 @@ func TestRun(t *testing.T) {
 		},
 		{
 			name: "3x3 - 20 steps",
-			puzzle: Puzzle{
-				InitialBoard: Board{
+			puzzle: puzzle.Puzzle{
+				InitialBoard: board.Board{
 					{7, 4, 3},
 					{2, 8, 6},
 					{0, 5, 1},

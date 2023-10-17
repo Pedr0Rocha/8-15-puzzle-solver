@@ -1,5 +1,5 @@
 // example from docs: https://pkg.go.dev/container/heap
-package main
+package puzzle
 
 import (
 	"container/heap"
